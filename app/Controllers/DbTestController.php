@@ -14,7 +14,7 @@ class DbTestController extends ResourceController
     {
         try {
             $model = new DetailMenuModel();
-            $data  = $model->findAll();
+            $data = $model->orderBy('nama_menu', 'desc')->findAll();
 
             return $this->respond($data);
         } catch (\Exception $e) {
