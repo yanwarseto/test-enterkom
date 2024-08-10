@@ -78,10 +78,10 @@ class Database extends Config
 
     public array $default = [
         'DSN'          => '',
-        'hostname'     => '103.175.220.112',
+        'hostname'     => 'localhost',
         'username'     => 'postgres',
-        'password'     => 'afilatihan',
-        'database'     => 'web', 
+        'password'     => 'rahasia123',
+        'database'     => 'test-enterkomp',
         'DBDriver'     => 'Postgre',
         'DBPrefix'     => '',
         'pConnect'     => false,
@@ -101,9 +101,9 @@ class Database extends Config
             'time'     => 'H:i:s',
         ],
     ];
-    
 
-    
+
+
     //    /**
     //     * Sample database connection for SQLite3.
     //     *

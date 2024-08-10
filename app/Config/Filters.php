@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Filters\Cors as FiltersCors;
 use CodeIgniter\Config\Filters as BaseFilters;
 use CodeIgniter\Filters\Cors;
 use CodeIgniter\Filters\CSRF;
@@ -12,6 +13,7 @@ use CodeIgniter\Filters\InvalidChars;
 use CodeIgniter\Filters\PageCache;
 use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
+use Fluent\Cors\Filters\CorsFilter;
 
 class Filters extends BaseFilters
 {
@@ -30,7 +32,7 @@ class Filters extends BaseFilters
         'honeypot'      => Honeypot::class,
         'invalidchars'  => InvalidChars::class,
         'secureheaders' => SecureHeaders::class,
-        'cors'          => Cors::class,
+        'cors' =>CorsFilter::class,
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
@@ -76,6 +78,7 @@ class Filters extends BaseFilters
         'after' => [
             // 'honeypot',
             // 'secureheaders',
+
         ],
     ];
 
@@ -93,7 +96,6 @@ class Filters extends BaseFilters
      * @var array<string, list<string>>
      */
     public array $methods = [];
-
     /**
      * List of filter aliases that should run on any
      * before or after URI patterns.
@@ -103,5 +105,10 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        'cors' => [
+            'before' => ['save-order'], // Apply CORS filter to the 'save-order' route
+            'after' => ['save-order']
+        ],
+    ];
 }
