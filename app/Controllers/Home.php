@@ -39,44 +39,49 @@ class Home extends BaseController
         }
 
         $orderData = $this->request->getJSON(true);
-
-        log_message('error', 'Received Data: ' . print_r($orderData, true));
-
+        // Basic validation
         if (empty($orderData) || !is_array($orderData)) {
             return $this->failValidationError('Invalid data');
         }
 
+        // More detailed validation can be added here
+
         $db = \Config\Database::connect();
         $builder = $db->table('"PO"."detail_pesanan"');
 
-        foreach ($orderData as $item) {
-            if (isset($item['uid_order'])) {
-                $insertData = [
-                    'uid_order' => $item['uid_order'],
-                    'nama_pesanan' => $item['nama_pesanan'],
-                    'varian' => $item['varian'],
-                    'quantity' => $item['quantity'],
-                    'price' => $item['price'],
-                    'uid_pesanan_master' => $item['uid_pesanan_master'],
-                    'pidvarian' => $item['pidvarian']
-                ];
+        try {
+            $db->transBegin(); // Start transaction
 
-                log_message('debug', 'Inserting data: ' . json_encode($insertData));
+            foreach ($orderData as $item) {
+                if (isset($item['uid_order'])) {
+                    $insertData = [
+                        'uid_order' => $item['uid_order'],
+                        'nama_pesanan' => $item['nama_pesanan'],
+                        'varian' => $item['varian'],
+                        'quantity' => $item['quantity'],
+                        'price' => $item['price'],
+                        'uid_pesanan_master' => $item['uid_pesanan_master'],
+                        'pidvarian' => $item['pidvarian'],
+                        'no_meja' => $item['no_meja']
+                    ];
 
-                try {
                     $builder->insert($insertData);
-                    log_message('debug', 'Order saved successfully: ' . json_encode($insertData));
-                } catch (\Exception $e) {
-                    log_message('error', 'Failed to insert order data: ' . $e->getMessage());
-                    return $this->failServerError('Failed to save order data');
+                } else {
+                    // Handle missing uid_order
+                    log_message('error', 'Missing uid_order in item: ' . print_r($item, true));
+                    // Consider returning a specific error response
                 }
-            } else {
-                log_message('error', 'Missing uid_order in item: ' . print_r($item, true));
             }
-        }
 
-        return $this->response->setJSON(['success' => true]);
+            $db->transCommit(); // Commit transaction
+            return $this->response->setJSON(['success' => true]);
+        } catch (\Exception $e) {
+            $db->transRollback(); // Rollback transaction on error
+            log_message('error', 'Failed to save order data: ' . $e->getMessage());
+            return $this->failServerError('Failed to save order data');
+        }
     }
+
 
     private function setCorsHeaders()
     {

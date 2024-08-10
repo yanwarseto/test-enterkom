@@ -2,7 +2,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const cartItems = [];
     const buttons = document.querySelectorAll('.add-to-cart');
     const modalButtons = document.querySelectorAll('.add-to-cart-modal');
-    const orderButton = document.querySelector('.order-menu'); // Select the order button
+    const orderButton = document.querySelector('.order-menu');
+    const selectedTableSelect = document.querySelector('.form-select');
+    const uid_master_pesanan = generateUID();
 
     buttons.forEach(button => {
         button.addEventListener('click', () => {
@@ -21,27 +23,71 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     orderButton.addEventListener('click', () => {
-        saveOrder();
+        const selectedTable = selectedTableSelect.value;
+        const orderData = cartItems.map(item => ({
+            uid_order: generateUID(),
+            nama_pesanan: item.name,
+            varian: item.varian,
+            quantity: item.quantity,
+            price: item.price * item.quantity,
+            uid_pesanan_master: uid_master_pesanan,
+            pidvarian: item.pidvarian,
+            no_meja: selectedTable
+        }));
+
+
+
+        // Replace with your actual API endpoint
+        fetch('http://localhost/test-enterkom/public/save-order', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(orderData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // alert('Order has been saved successfully!');
+                    cartItems.length = 0;
+                    updateCartModal();
+                    window.location.href = '/bill';
+                } else {
+                    alert('Error saving order');
+                    console.log('Data pesanan yang akan dikirim:', orderData); // For debugging
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while saving your order.');
+            });
     });
 
     function addToCart(button) {
-        let uid_order = button.getAttribute('data-id'); // Changed to uid_order
+        let uid_order = button.getAttribute('data-id');
         let name = button.getAttribute('data-name');
         let varian = button.getAttribute('data-varian');
         let image = button.getAttribute('data-image');
-        let price = parseFloat(button.getAttribute('data-harga')); 
-        let pidvarian = button.getAttribute('data-pidvarian'); 
+        let price = parseFloat(button.getAttribute('data-harga'));
+        let pidvarian = button.getAttribute('data-pidvarian');
 
         if (varian == null || varian === "") {
             varian = '-';
         }
 
-        // Check if item already exists in the cart
         const existingItem = cartItems.find(item => item.uid_order === uid_order && item.varian === varian);
         if (existingItem) {
             existingItem.quantity += 1;
         } else {
-            cartItems.push({ uid_order, name, varian, image, price, pidvarian, quantity: 1 });
+            cartItems.push({
+                uid_order,
+                name,
+                varian,
+                image,
+                price,
+                pidvarian,
+                quantity: 1
+            });
         }
 
         updateCartModal();
@@ -52,10 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalHargaElement = document.getElementById('total-harga');
         cartItemsContainer.innerHTML = '';
 
-        // Create a number formatter for currency
         const currencyFormatter = new Intl.NumberFormat('id-ID', {
             style: 'currency',
-            currency: 'IDR',
+            currency: 'IDR'
         });
 
         let totalHarga = 0;
@@ -91,44 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         totalHargaElement.textContent = currencyFormatter.format(totalHarga);
     }
-
-    function saveOrder() {
-        // Directly create an array of items without wrapping it in an "items" key
-        const orderData = cartItems.map(item => ({
-            uid_order: item.uid_order,
-            nama_pesanan: item.name,
-            varian: item.varian,
-            quantity: item.quantity,
-            price: item.price * item.quantity, // Total price for the item
-            uid_pesanan_master: generateUID(), // Ensure this function is defined
-            pidvarian: item.pidvarian,
-        }));
-       
-        fetch('http://localhost/test-enterkom/public/save-order', { // Replace with your actual endpoint
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(orderData), // Send the array directly
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Response from server:', data); // Log the complete response
-            if (data.success) {
-                alert('Order has been saved successfully!');
-                // Clear the cart
-                cartItems.length = 0;
-                updateCartModal();
-            } else {
-                alert('Error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('There was an error saving your order. Please try again.');
-        });
-    }
-    
 
     function generateUID() {
         return 'uid-' + Math.random().toString(36).substr(2, 9);
